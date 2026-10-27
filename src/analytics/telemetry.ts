@@ -19,14 +19,15 @@ const GA_ENDPOINT = 'https://www.google-analytics.com/mp/collect';
 export const GA4_CONFIG = {
   firebaseProjectId: 'hushfloat',
   firebaseProjectNumber: '268016127556',
+  streamId: '16213423993',
   measurementId:
     (typeof import.meta !== 'undefined' &&
       (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_GA4_MEASUREMENT_ID) ||
-    'G-HUSHFLOAT01',
+    'G-7Z9RP8PBWZ',
   apiSecret:
     (typeof import.meta !== 'undefined' &&
       (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_GA4_API_SECRET) ||
-    '',
+    'Endf80H7RNy-4sCCijdunA',
 };
 
 const SESSION_EXPIRATION_MS = 30 * 60 * 1000; // 30 minutes standard GA4 session timeout

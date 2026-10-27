@@ -3,6 +3,7 @@ import { trackEvent } from '../src/analytics/telemetry';
 
 export default defineBackground(() => {
   let creatingOffscreen: Promise<void> | null = null;
+  let smartPausedByTab = false;
 
   if (typeof chrome !== 'undefined' && chrome.runtime?.onInstalled) {
     chrome.runtime.onInstalled.addListener((details) => {
@@ -71,6 +72,7 @@ export default defineBackground(() => {
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.target === 'HUSH_BACKGROUND' && message.cmd) {
+      smartPausedByTab = false;
       dispatchAudio(message.cmd as AudioCommand).then(() => {
         sendResponse({ ok: true });
       });
@@ -79,8 +81,18 @@ export default defineBackground(() => {
     return false;
   });
 
-  // Background check for Sleep Timer, Smart Wake-Up Alarm & Focus Pomodoro Timer
-  setInterval(async () => {
+  async function hasExternalAudibleTab(): Promise<boolean> {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.tabs?.query) {
+        const tabs = await chrome.tabs.query({ audible: true });
+        const extOrigin = chrome.runtime?.getURL ? chrome.runtime.getURL('') : '';
+        return tabs.some((t) => !extOrigin || !t.url || !t.url.startsWith(extOrigin));
+      }
+    } catch {}
+    return false;
+  }
+
+  async function runBackgroundChecks() {
     try {
       const data = await chrome.storage.local.get([
         'sleepTimerEnd',
@@ -91,12 +103,14 @@ export default defineBackground(() => {
         'masterPlaying',
         'masterVolume',
         'soundVolumes',
+        'smartPauseEnabled',
       ]);
 
       const now = Date.now();
 
       // 1. Sleep Timer expiration -> Gentle fade out and stop all sounds
       if (data.sleepTimerEnd && typeof data.sleepTimerEnd === 'number' && now >= data.sleepTimerEnd) {
+        smartPausedByTab = false;
         await chrome.storage.local.set({
           sleepTimerEnd: null,
           masterPlaying: false,
@@ -116,6 +130,7 @@ export default defineBackground(() => {
 
       // 2. Smart Wake-Up Alarm -> Gentle Birds Ambient
       if (data.wakeTimerEnd && typeof data.wakeTimerEnd === 'number' && now >= data.wakeTimerEnd) {
+        smartPausedByTab = false;
         const currentVolumes = (data.soundVolumes as Record<string, number>) || {};
         const updatedVolumes = { ...currentVolumes, bio_birds: 0.75 };
         await chrome.storage.local.set({
@@ -147,6 +162,60 @@ export default defineBackground(() => {
         });
         trackEvent('focus_cycle_transition', { next_state: nextState });
       }
+
+      // 4. Smart Pause when another browser tab plays audible media
+      const smartPauseOn = data.smartPauseEnabled !== false; // default true
+      if (data.masterPlaying) {
+        if (smartPauseOn) {
+          const otherTabAudible = await hasExternalAudibleTab();
+          if (otherTabAudible && !smartPausedByTab) {
+            smartPausedByTab = true;
+            await dispatchAudio({ type: 'STOP_ALL' });
+          } else if (!otherTabAudible && smartPausedByTab) {
+            smartPausedByTab = false;
+            const currentVolumes = (data.soundVolumes as Record<string, number>) || {
+              bio_ocean: 0.7,
+              bio_campfire: 0.85,
+            };
+            await dispatchAudio({
+              type: 'APPLY_MIX',
+              volumes: currentVolumes,
+              masterVolume: typeof data.masterVolume === 'number' ? data.masterVolume : 0.85,
+              isPlaying: true,
+            });
+          }
+        } else if (smartPausedByTab) {
+          // User disabled Smart Pause while it was paused -> resume immediately
+          smartPausedByTab = false;
+          const currentVolumes = (data.soundVolumes as Record<string, number>) || {
+            bio_ocean: 0.7,
+            bio_campfire: 0.85,
+          };
+          await dispatchAudio({
+            type: 'APPLY_MIX',
+            volumes: currentVolumes,
+            masterVolume: typeof data.masterVolume === 'number' ? data.masterVolume : 0.85,
+            isPlaying: true,
+          });
+        }
+      } else {
+        smartPausedByTab = false;
+      }
     } catch {}
-  }, 1000);
+  }
+
+  // High-resolution 1s tick while background context is active
+  setInterval(runBackgroundChecks, 1000);
+
+  // Persistent MV3 alarm fallback so Chromium/Opera service workers wake up reliably
+  if (typeof chrome !== 'undefined' && chrome.alarms) {
+    try {
+      chrome.alarms.create('hushfloat_timer_sync', { periodInMinutes: 0.5 });
+      chrome.alarms.onAlarm.addListener((alarm) => {
+        if (alarm.name === 'hushfloat_timer_sync') {
+          runBackgroundChecks();
+        }
+      });
+    } catch {}
+  }
 });

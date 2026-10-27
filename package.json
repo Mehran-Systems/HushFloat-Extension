@@ -1,6 +1,6 @@
 {
   "name": "@mehransystems/hushfloat-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "HushFloat by Mehran Systems — Ambient Sound Sanctuary, Sleep Timer, Brainwave & Focus Mixer for Firefox, Chrome, Edge & Opera.",
   "private": true,
   "type": "module",

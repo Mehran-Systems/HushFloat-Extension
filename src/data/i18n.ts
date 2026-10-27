@@ -186,8 +186,12 @@ export const LegalContent = {
       body: '• Your mixes, favourites, timer settings, custom greeting name, and language preference are stored locally via browser storage and are never uploaded to external servers.',
     },
     {
+      heading: 'Anonymous usage analytics (Optional)',
+      body: '• To help improve HushFloat, the extension sends anonymous, non-identifiable feature usage events (such as sound toggles and timer usage) via Google Analytics 4 Measurement Protocol using a random UUID.\n• No browsing history, web page content, personal data, or email addresses are ever collected. You can turn off anonymous analytics at any time using the toggle below.',
+    },
+    {
       heading: 'Permissions',
-      body: 'HushFloat only asks for what it needs:\n• storage: to save your custom sound mixes, favourites, and preferences locally.\n• alarms: to run your Sleep Timer, Smart Wake-Up Alarm, and Focus Pomodoro timer accurately in the background.\n• offscreen (Chromium): to keep your relaxing audio playing smoothly when the popup is closed.',
+      body: 'HushFloat only asks for what it needs:\n• storage: to save your custom sound mixes, favourites, and preferences locally.\n• alarms: to run your Sleep Timer, Smart Wake-Up Alarm, and Focus Pomodoro timer accurately in the background.\n• offscreen (Chromium/Opera): to keep your relaxing audio playing smoothly when the popup is closed.',
     },
     {
       heading: 'Contact',

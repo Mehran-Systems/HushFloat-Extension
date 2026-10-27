@@ -4,22 +4,37 @@ Cross-browser ambient sound sanctuary, sleep timer, brainwave synthesizer, and f
 
 ## Supported Browsers
 - **Mozilla Firefox** (`hushfloat@mehransystems.com`)
+- **Opera**
 - **Google Chrome**
-- **Microsoft Edge**
-- **Opera / Brave / Vivaldi**
+- **Microsoft Edge / Brave / Vivaldi**
 
-## Commands
+## Build Instructions (For Store Reviewers & Reproducible Builds)
+
+### Prerequisites
+- **Node.js:** `v20.x` or `v22.x` LTS
+- **npm:** `v10.x` (included with Node.js)
+- **Operating System:** Windows, macOS, or Linux
+
+### Steps to Reproduce Build From Source
+```bash
+# 1. Install dependencies from package-lock.json
+npm ci
+
+# 2. Build & package for Mozilla Firefox (outputs .output/firefox-mv2 and .output/hushfloat-1.0.1-firefox.zip)
+npm run zip:firefox
+
+# 3. Build & package for Opera (outputs .output/opera-mv3 and .output/hushfloat-1.0.1-opera.zip)
+npm run zip:opera
+
+# 4. Build & package for Chrome / Edge (outputs .output/chrome-mv3 and .output/hushfloat-1.0.1-chrome.zip)
+npm run zip
+```
+
+## Development Commands
 
 ```bash
 # Development mode (opens browser with Hot Module Replacement)
 npm run dev           # Chrome / Chromium
 npm run dev:firefox   # Firefox
-
-# Production builds (outputs to .output/chrome-mv3 and .output/firefox-mv2 or mv3)
-npm run build
-npm run build:firefox
-
-# Create store-ready .zip packages
-npm run zip
-npm run zip:firefox
+npm run dev:opera     # Opera
 ```

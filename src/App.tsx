@@ -39,6 +39,7 @@ interface StoredState {
   focusState?: 'WORK' | 'REST';
   focusTimerEnd?: number | null;
   smartPauseEnabled?: boolean;
+  analyticsEnabled?: boolean;
   ownerName?: string | null;
   locale?: string | null;
   savedPresets?: SoundPreset[];
@@ -115,6 +116,7 @@ export const App: React.FC = () => {
       : null;
 
   const [smartPauseEnabled, setSmartPauseEnabled] = useState(true);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [ownerName, setOwnerName] = useState<string | null>(defaultBrowserProfileName);
   const [locale, setLocale] = useState<string | null>(null);
   const [savedPresets, setSavedPresets] = useState<SoundPreset[]>(defaultSavedMixes);
@@ -183,31 +185,11 @@ export const App: React.FC = () => {
       if (state.focusState) setFocusState(state.focusState);
       if (state.focusTimerEnd !== undefined) setFocusTimerEnd(state.focusTimerEnd);
       if (typeof state.smartPauseEnabled === 'boolean') setSmartPauseEnabled(state.smartPauseEnabled);
+      if (typeof state.analyticsEnabled === 'boolean') setAnalyticsEnabled(state.analyticsEnabled);
       if (state.ownerName && state.ownerName.trim()) {
         setOwnerName(state.ownerName.trim());
-      } else {
-        // Query Chromium identity API if available, otherwise fall back to detected browser profile name
-        const chromeAny = typeof chrome !== 'undefined' ? (chrome as any) : null;
-        if (chromeAny?.identity?.getProfileUserInfo) {
-          try {
-            chromeAny.identity.getProfileUserInfo({ accountStatus: 'ANY' }, (info: { email?: string }) => {
-              if (info?.email) {
-                const derived = info.email
-                  .split('@')[0]
-                  .replace(/[._-]+/g, ' ')
-                  .replace(/\b\w/g, (c) => c.toUpperCase());
-                setOwnerName(derived);
-                saveStateToStorage({ ownerName: derived });
-              } else if (defaultBrowserProfileName) {
-                setOwnerName(defaultBrowserProfileName);
-              }
-            });
-          } catch {
-            if (defaultBrowserProfileName) setOwnerName(defaultBrowserProfileName);
-          }
-        } else if (defaultBrowserProfileName) {
-          setOwnerName(defaultBrowserProfileName);
-        }
+      } else if (defaultBrowserProfileName) {
+        setOwnerName(defaultBrowserProfileName);
       }
       if (state.locale !== undefined) setLocale(state.locale);
       if (state.savedPresets) {
@@ -217,6 +199,36 @@ export const App: React.FC = () => {
       }
       if (state.castState !== undefined) setCastState(state.castState);
     });
+
+    // Live sync with background service worker timer & alarm transitions
+    if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+      const handleStorageChange = (
+        changes: Record<string, chrome.storage.StorageChange>,
+        area: string
+      ) => {
+        if (area !== 'local') return;
+        if (changes.masterPlaying !== undefined) {
+          setMasterPlaying(Boolean(changes.masterPlaying.newValue));
+        }
+        if (changes.sleepTimerEnd !== undefined) {
+          setSleepTimerEnd(changes.sleepTimerEnd.newValue ?? null);
+        }
+        if (changes.wakeTimerEnd !== undefined) {
+          setWakeTimerEnd(changes.wakeTimerEnd.newValue ?? null);
+        }
+        if (changes.focusState !== undefined && changes.focusState.newValue) {
+          setFocusState(changes.focusState.newValue);
+        }
+        if (changes.focusTimerEnd !== undefined) {
+          setFocusTimerEnd(changes.focusTimerEnd.newValue ?? null);
+        }
+        if (changes.soundVolumes !== undefined && changes.soundVolumes.newValue) {
+          setSoundVolumes(changes.soundVolumes.newValue);
+        }
+      };
+      chrome.storage.onChanged.addListener(handleStorageChange);
+      return () => chrome.storage.onChanged.removeListener(handleStorageChange);
+    }
   }, []);
 
   // Tick Sleep & Focus countdowns every 1s
@@ -1710,6 +1722,33 @@ export const App: React.FC = () => {
                   <div style={{ whiteSpace: 'pre-line' }}>{sec.body}</div>
                 </div>
               ))}
+              <div
+                onClick={() => {
+                  const next = !analyticsEnabled;
+                  setAnalyticsEnabled(next);
+                  saveStateToStorage({ analyticsEnabled: next });
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 11px',
+                  margin: '4px 0 8px',
+                  borderRadius: 12,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ color: '#FFFFFF', fontSize: 11.5, fontWeight: 600 }}>
+                  Anonymous Usage Analytics
+                </span>
+                <div
+                  className={`hf-toggle-switch ${analyticsEnabled ? 'hf-toggle-switch--on' : ''}`}
+                >
+                  <div className="hf-toggle-switch__knob" />
+                </div>
+              </div>
             </div>
             <button
               type="button"
