@@ -11,6 +11,25 @@ export default defineConfig({
     define: {
       __BROWSER_PROFILE_NAME__: JSON.stringify(process.env.HUSHFLOAT_DEFAULT_PROFILE_NAME || ''),
     },
+    plugins: [
+      {
+        name: 'strip-unused-react-dom-innerhtml',
+        transform(code, id) {
+          if (id.includes('react-dom') && code.includes('.innerHTML=')) {
+            return {
+              code: code
+                .replace(/([a-zA-Z0-9_$]+)\.innerHTML=([a-zA-Z0-9_$]+)/g, '$1.textContent=$2')
+                .replace(
+                  /([a-zA-Z0-9_$]+)\.innerHTML="<svg>"\+([a-zA-Z0-9_$]+)\.valueOf\(\)\.toString\(\)\+"<\/svg>"/g,
+                  '$1.textContent=""'
+                ),
+              map: null,
+            };
+          }
+          return null;
+        },
+      },
+    ],
   }),
   manifest: ({ browser }) => ({
     name: 'HushFloat',
@@ -59,7 +78,14 @@ export default defineConfig({
           browser_specific_settings: {
             gecko: {
               id: 'hushfloat@mehransystems.com',
-              strict_min_version: '109.0',
+              strict_min_version: '140.0',
+              data_collection_permissions: {
+                required: ['none'],
+                optional: ['technicalAndInteraction'],
+              },
+            },
+            gecko_android: {
+              strict_min_version: '142.0',
             },
           },
         }

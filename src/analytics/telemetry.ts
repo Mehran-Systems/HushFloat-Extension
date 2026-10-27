@@ -146,6 +146,19 @@ export async function trackEvent(
 
     if (!analyticsEnabled) return;
 
+    // Respect Firefox built-in data_collection_permissions consent (Firefox 140+)
+    try {
+      const browserAny = (typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : null) as any;
+      if (browserAny?.permissions?.contains) {
+        const hasBuiltInConsent = await browserAny.permissions.contains({
+          data_collection: ['technicalAndInteraction'],
+        });
+        if (hasBuiltInConsent === false) return;
+      }
+    } catch {
+      // Older browsers or Chromium do not support `data_collection` in permissions.contains
+    }
+
     const cleanParams: Record<string, string | number> = {
       session_id: sessionId,
       engagement_time_msec: DEFAULT_ENGAGEMENT_TIME_MS,

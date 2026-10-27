@@ -40,7 +40,7 @@ const biophonic: SoundTrack[] = [
 const anthrophonic: SoundTrack[] = [
   { id: 'ant_train', nameKey: 'sound_ant_train', subtitleKey: 'sub_ant_train', defaultSubtitle: 'Rhythmic Track', category: 'ANTHROPHONIC', filename: 'train_ride', assetFile: 'train_ride.wav', iconName: 'train' },
   { id: 'ant_fan', nameKey: 'sound_ant_fan', subtitleKey: 'sub_ant_fan', defaultSubtitle: 'Steady Whir', category: 'ANTHROPHONIC', filename: 'fan', assetFile: 'fan.wav', iconName: 'cyclone' },
-  { id: 'ant_cosmic', nameKey: 'sound_ant_cosmic', subtitleKey: 'sub_ant_cosmic', defaultSubtitle: 'Deep Ambient', category: 'ANTHROPHONIC', filename: 'vacuum', assetFile: 'vacuum.flac', iconName: 'cosmic' },
+  { id: 'ant_cosmic', nameKey: 'sound_ant_cosmic', subtitleKey: 'sub_ant_cosmic', defaultSubtitle: 'Deep Ambient', category: 'ANTHROPHONIC', filename: 'vacuum', assetFile: 'vacuum.mp3', iconName: 'cosmic' },
   { id: 'ant_heartbeat', nameKey: 'sound_ant_heartbeat', subtitleKey: 'sub_ant_heartbeat', defaultSubtitle: 'Soothing Pulse', category: 'ANTHROPHONIC', filename: 'heartbeat', iconName: 'favorite' },
   { id: 'ant_airplane', nameKey: 'sound_ant_airplane', subtitleKey: 'sub_ant_airplane', defaultSubtitle: 'Cruising Flight', category: 'ANTHROPHONIC', filename: 'airplane_cabin', assetFile: 'airplane_cabin.mp3', iconName: 'flight' },
   { id: 'ant_cafe', nameKey: 'sound_ant_cafe', subtitleKey: 'sub_ant_cafe', defaultSubtitle: 'Soft Murmur', category: 'ANTHROPHONIC', filename: 'cafe_ambience', assetFile: 'cafe_ambience.mp3', iconName: 'coffee' },
